@@ -19,10 +19,8 @@ import netmiko as nm
 import warnings
 import logging
 import sys
-import argparse
-import xmltodict
-import telnetlib
 import pexpect
+import xmltodict
 from netaddr import IPNetwork
 warnings.filterwarnings(action='ignore', module='.*paramiko.*')
 
