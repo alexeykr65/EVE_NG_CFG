@@ -282,6 +282,7 @@ class EveNgConf:
                         "enable password cisco",
                         "username root privilege 15 password cisco",
                         "end",
+                        "wr mem"
                     ]
                 elif (self.__evenglib[rt].template.strip() == "xrv"):
                     cmd_run = [
