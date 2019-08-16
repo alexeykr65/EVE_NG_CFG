@@ -352,6 +352,7 @@ class EveNgConf:
             ch.sendline("\n")
             ch.expect("[yes/no]")
             ch.sendline("no")
+            ch.expect("Router>")
         for cmd in cmd_run:
             ch.sendline(f"{cmd}")
             ch.expect("#")
