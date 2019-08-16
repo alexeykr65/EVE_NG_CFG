@@ -263,7 +263,7 @@ class EveNgConf:
         for rt in self.__evenglib:
             if self.__evenglib[rt].mgm_ip:
                 self.__logger.info(f'RT: {rt} Port: {self.__evenglib[rt].port} IP: {self.__evenglib[rt].mgm_ip}  Template: {self.__evenglib[rt].template}')
-                if self.__evenglib[rt].template.strip() == "csr1000vng":
+                if (self.__evenglib[rt].template.strip() == "csr1000vng" or self.__evenglib[rt].template.strip() == "vios"):
                     cmd_run = [
                         "\n\nenable",
                         "terminal length 0",
@@ -275,13 +275,15 @@ class EveNgConf:
                         "no shut",
                         f"ip route 0.0.0.0 0.0.0.0 {self.__evenglib[rt].mgm_gw}",
                         f"hostname {rt.upper()}",
-                        "ip domain-name incoma.ru",
+                        "ip domain-name domain.loc",
                         "crypto key generate rsa modulus 2048",
                         "aaa new-model",
                         "aaa authentication login default local",
                         "aaa authorization exec default local ",
                         "enable password cisco",
                         "username root privilege 15 password cisco",
+                        "line vty 0 4",
+                        "transport input all",
                         "end",
                         "wr mem"
                     ]
@@ -296,33 +298,11 @@ class EveNgConf:
                         "router static",
                         f"address-family ipv4 unicast 0.0.0.0/0 {self.__evenglib[rt].mgm_gw}",
                         "exit",
-                        "domain name incoma.ru",
+                        "domain name domain.loc",
                         "ssh server v2",
                         "commit",
                         "end",
                         "crypto key generate rsa\n"
-                    ]
-                elif self.__evenglib[rt].template.strip() == "vios":
-                    cmd_run = [
-                        "\n\nenable",
-                        "terminal length 0",
-                        "conf t",
-                        "no service config",
-                        f"default int {self.__evenglib[rt].mgm_int}",
-                        f"int {self.__evenglib[rt].mgm_int}",
-                        f"ip add {self.__evenglib[rt].mgm_ip} {self.__evenglib[rt].mgm_mask}",
-                        "no shut",
-                        f"ip route 0.0.0.0 0.0.0.0 {self.__evenglib[rt].mgm_gw}",
-                        f"hostname {rt.upper()}",
-                        "ip domain-name incoma.ru",
-                        "crypto key generate rsa modulus 2048",
-                        "aaa new-model",
-                        "aaa authentication login default local",
-                        "aaa authorization exec default local ",
-                        "enable password cisco",
-                        "username root privilege 15 password cisco",
-                        "end",
-                        "wr mem"
                     ]
 
                 self.pexpect(rt, self.__eveng_host, self.__evenglib[rt].port, cmd_run, rt_type=self.__evenglib[rt].template)
@@ -350,11 +330,24 @@ class EveNgConf:
             ch.expect("#")
         if rt_type == "vios":
             ch.sendline("\n")
-            ch.expect("[yes/no]")
-            ch.sendline("no\n\n")
-            ch.expect("Router>")
+            try:
+                ret = ch.expect(["initial configuration dialog", "Router>"])
+                if ret == 0:
+                    self.__logger.info(f"Initial configurationa dialog ... ")
+                    ch.sendline("no\n\n")
+                    time.sleep(5)
+                    ch.expect("Press RETURN to get started", timeout=30)
+                    time.sleep(5)
+                    ch.sendline("\r\n\r\n")
+                    ch.expect("Router>", timeout=40)
+                    self.__logger.info(f"Expect Router prompt ... OK")
+            except pexpect.TIMEOUT:
+                self.__logger.info(f"Timeout expect ... ")
+                time.sleep(5)
+            ch.sendline("\r\n\r\n")
+
         for cmd in cmd_run:
             ch.sendline(f"{cmd}")
-            ch.expect("#")
+            ch.expect("#", timeout=60)
         self.__logger.info(f"Run commands ... OK")
         ch.close()
