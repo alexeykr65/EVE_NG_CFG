@@ -351,7 +351,7 @@ class EveNgConf:
         if rt_type == "vios":
             ch.sendline("\n")
             ch.expect("[yes/no]")
-            ch.sendline("no")
+            ch.sendline("no\n\n")
             ch.expect("Router>")
         for cmd in cmd_run:
             ch.sendline(f"{cmd}")
