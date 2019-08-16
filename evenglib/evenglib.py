@@ -131,7 +131,7 @@ class EveUnl:
 class EveNgLab:
     """ Collect some information about lab from unl file and processes in EVE-NG """
 
-    def __init__(self, unl_file, eve_ip_host='', eve_ssh_username='root', eve_ssh_password='cisco', template_list=['csr1000vng', 'xrv'], file_config='eveng.cfg'):
+    def __init__(self, unl_file, eve_ip_host='', eve_ssh_username='root', eve_ssh_password='cisco', template_list=['csr1000vng', 'xrv', 'vios'], file_config='eveng.cfg'):
         self.__template_list = template_list
         self.__unl_file = unl_file
         self.__file_config = file_config
@@ -301,6 +301,28 @@ class EveNgConf:
                         "end",
                         "crypto key generate rsa\n"
                     ]
+                    if self.__evenglib[rt].template.strip() == "vios":
+                        cmd_run = [
+                            "\n\nenable",
+                            "terminal length 0",
+                            "conf t",
+                            "no service config",
+                            f"default int {self.__evenglib[rt].mgm_int}",
+                            f"int {self.__evenglib[rt].mgm_int}",
+                            f"ip add {self.__evenglib[rt].mgm_ip} {self.__evenglib[rt].mgm_mask}",
+                            "no shut",
+                            f"ip route 0.0.0.0 0.0.0.0 {self.__evenglib[rt].mgm_gw}",
+                            f"hostname {rt.upper()}",
+                            "ip domain-name incoma.ru",
+                            "crypto key generate rsa modulus 2048",
+                            "aaa new-model",
+                            "aaa authentication login default local",
+                            "aaa authorization exec default local ",
+                            "enable password cisco",
+                            "username root privilege 15 password cisco",
+                            "end",
+                            "wr mem"
+                        ]
 
                 self.pexpect(rt, self.__eveng_host, self.__evenglib[rt].port, cmd_run, rt_type=self.__evenglib[rt].template)
 
