@@ -348,7 +348,10 @@ class EveNgConf:
             ch.sendline("cisco")
             ch.sendline("cisco")
             ch.expect("#")
-
+        if rt_type == "vios":
+            ch.sendline("\n")
+            ch.expect("[yes/no]")
+            ch.sendline("no")
         for cmd in cmd_run:
             ch.sendline(f"{cmd}")
             ch.expect("#")
